@@ -1,0 +1,37 @@
+apiVersion: extensions.higress.io/v1alpha1
+kind: WasmPlugin
+metadata:
+  name: agent-session-monitor
+  namespace: higress-system
+spec:
+  priority: 100
+  matchRules:
+    - ingress:
+        - default/ai-gateway
+      config:
+        session_id_header: "X-Session-ID"
+        session_id_query: "session_id"
+        max_session_duration_sec: 3600
+        enable_metrics: true
+        redis_service_name: "redis.default.svc.cluster.local"
+        redis_service_port: 6379
+  url: oci://higress-registry.cn-hangzhou.cr.aliyuncs.com/plugins/agent-session-monitor:1.0.0
+  phase: AUTHN
+  failStrategy: FAIL_OPEN
+---
+# Example ConfigMap for dashboard integration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-session-monitor-config
+  namespace: higress-system
+data:
+  config.yaml: |
+    session_id_header: "X-Session-ID"
+    session_id_query: "session_id"
+    max_session_duration_sec: 3600
+    enable_metrics: true
+    log_level: "info"
+    alert_thresholds:
+      error_rate_pct: 5
+      p99_duration_ms: 30000
